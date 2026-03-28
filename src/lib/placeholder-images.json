@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Luxurious market lifestyle background",
+      "imageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1920",
+      "imageHint": "luxury market"
+    },
+    {
+      "id": "brand-story",
+      "description": "Soft light on warm textures",
+      "imageUrl": "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800",
+      "imageHint": "warm fashion"
+    },
+    {
+      "id": "operating-model",
+      "description": "Craftsmanship and detail",
+      "imageUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=800",
+      "imageHint": "boutique interior"
+    },
+    {
+      "id": "trust-safety",
+      "description": "Secure and elegant transaction",
+      "imageUrl": "https://images.unsplash.com/photo-1556742044-3c52d6e88c62?auto=format&fit=crop&q=80&w=800",
+      "imageHint": "secure transaction"
+    }
+  ]
+}
