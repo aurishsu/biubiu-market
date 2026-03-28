@@ -1,72 +1,77 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
-import { Search, SlidersHorizontal, X, ChevronDown, Eye, Tag, ShieldCheck, Clock, Grid3X3, LayoutList, Heart, ExternalLink, ArrowUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, SlidersHorizontal, X, ShieldCheck, Heart, Grid3X3, ChevronDown } from "lucide-react";
 
-type SortKey = "newest" | "price-asc" | "price-desc" | "name";
-type Category = "all" | "fashion" | "watches" | "art" | "home" | "bags";
+type Category = "all" | "electronics" | "fashion" | "furniture" | "bags" | "books" | "sports" | "toys" | "kitchen" | "art";
 
 interface Product {
   id: number;
   name: string;
-  nameCn: string;
-  price: number;
-  priceDisplay: string;
-  brand: string;
-  category: Category;
+  price: string;
+  location: string;
   img: string;
-  condition: string;
-  conditionCn: string;
-  verified: boolean;
-  isNew: boolean;
+  aspect: string; // tailwind aspect ratio class
   seller: string;
-  listedAgo: string;
-  listedAgoCn: string;
+  time: string;
+  verified: boolean;
+  category: Category;
+  condition: string;
+  likes: number;
 }
 
 const PRODUCTS: Product[] = [
-  { id: 1, name: "1960s Silk Scarf", nameCn: "1960年代丝巾", price: 240, priceDisplay: "$240", brand: "Hermès Heritage", category: "fashion", img: "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&q=80&w=600", condition: "Pristine", conditionCn: "全新", verified: true, isNew: true, seller: "Marie D.", listedAgo: "2h ago", listedAgoCn: "2小时前" },
-  { id: 2, name: "Minimalist Brass Vessel", nameCn: "极简黄铜花瓶", price: 180, priceDisplay: "$180", brand: "Oda Studio", category: "home", img: "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?auto=format&fit=crop&q=80&w=600", condition: "Excellent", conditionCn: "优秀", verified: true, isNew: false, seller: "Luca R.", listedAgo: "1d ago", listedAgoCn: "1天前" },
-  { id: 3, name: "Leather Travel Trunk", nameCn: "皮革旅行箱", price: 1200, priceDisplay: "$1,200", brand: "Maison Voyage", category: "bags", img: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=600", condition: "Loved", conditionCn: "有使用痕迹", verified: true, isNew: false, seller: "Sophia K.", listedAgo: "3d ago", listedAgoCn: "3天前" },
-  { id: 4, name: "Ceramic Tea Set", nameCn: "陶瓷茶具套装", price: 320, priceDisplay: "$320", brand: "Kyoto Artisans", category: "home", img: "https://images.unsplash.com/photo-1515696955266-4f67e13219e8?auto=format&fit=crop&q=80&w=600", condition: "Pristine", conditionCn: "全新", verified: false, isNew: true, seller: "Yuki T.", listedAgo: "5h ago", listedAgoCn: "5小时前" },
-  { id: 5, name: "Hand-Woven Cashmere", nameCn: "手工羊绒围巾", price: 850, priceDisplay: "$850", brand: "Altai Peaks", category: "fashion", img: "https://images.unsplash.com/photo-1520975661595-6453be3f7070?auto=format&fit=crop&q=80&w=600", condition: "Excellent", conditionCn: "优秀", verified: true, isNew: false, seller: "Elena V.", listedAgo: "6h ago", listedAgoCn: "6小时前" },
-  { id: 6, name: "Antique Timepiece", nameCn: "古董腕表", price: 3400, priceDisplay: "$3,400", brand: "Patek Legacy", category: "watches", img: "https://images.unsplash.com/photo-1524592093835-8421b1db3e2d?auto=format&fit=crop&q=80&w=600", condition: "Excellent", conditionCn: "优秀", verified: true, isNew: false, seller: "James L.", listedAgo: "2d ago", listedAgoCn: "2天前" },
-  { id: 7, name: "Oil on Canvas", nameCn: "布面油画", price: 2800, priceDisplay: "$2,800", brand: "Atelier Moderne", category: "art", img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80&w=600", condition: "Pristine", conditionCn: "全新", verified: true, isNew: true, seller: "Claude M.", listedAgo: "1h ago", listedAgoCn: "1小时前" },
-  { id: 8, name: "Vintage Handbag", nameCn: "中古手提包", price: 1650, priceDisplay: "$1,650", brand: "Chanel Archive", category: "bags", img: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&q=80&w=600", condition: "Excellent", conditionCn: "优秀", verified: true, isNew: false, seller: "Anna P.", listedAgo: "4d ago", listedAgoCn: "4天前" },
-  { id: 9, name: "Swiss Chronograph", nameCn: "瑞士计时码表", price: 5200, priceDisplay: "$5,200", brand: "Omega Vintage", category: "watches", img: "https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?auto=format&fit=crop&q=80&w=600", condition: "Pristine", conditionCn: "全新", verified: true, isNew: true, seller: "Hans W.", listedAgo: "30m ago", listedAgoCn: "30分钟前" },
+  { id: 1, name: "索尼 WH-1000XM4 降噪耳机", price: "¥680", location: "上海浦东", img: "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/5]", seller: "小王数码", time: "3分钟前", verified: true, category: "electronics", condition: "95新", likes: 24 },
+  { id: 2, name: "北欧风实木书桌 120cm", price: "¥350", location: "北京朝阳", img: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[3/4]", seller: "搬家急售", time: "15分钟前", verified: false, category: "furniture", condition: "八成新", likes: 8 },
+  { id: 3, name: "Levi's 501 牛仔裤 W32", price: "¥120", location: "广州天河", img: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[3/5]", seller: "衣柜清理", time: "1小时前", verified: false, category: "fashion", condition: "九成新", likes: 5 },
+  { id: 4, name: "iPad Pro 11寸 2022 256G", price: "¥3,800", location: "深圳南山", img: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/3]", seller: "数码达人Leo", time: "28分钟前", verified: true, category: "electronics", condition: "98新", likes: 67 },
+  { id: 5, name: "Coach 托特包 棕色经典款", price: "¥450", location: "杭州西湖", img: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/5]", seller: "包包控小美", time: "2小时前", verified: true, category: "bags", condition: "九成新", likes: 31 },
+  { id: 6, name: "村上春树文集 全套12本", price: "¥85", location: "成都锦江", img: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[1/1]", seller: "书虫阿杰", time: "5小时前", verified: false, category: "books", condition: "品相好", likes: 12 },
+  { id: 7, name: "戴森 V12 吸尘器", price: "¥1,500", location: "上海徐汇", img: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[3/4]", seller: "家电二手铺", time: "45分钟前", verified: true, category: "kitchen", condition: "95新", likes: 43 },
+  { id: 8, name: "油画 抽象风景 60x80cm", price: "¥280", location: "南京鼓楼", img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/5]", seller: "美院毕业生", time: "1天前", verified: false, category: "art", condition: "全新", likes: 19 },
+  { id: 9, name: "Switch OLED + 3个游戏", price: "¥1,650", location: "武汉洪山", img: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/3]", seller: "游戏换新党", time: "3小时前", verified: true, category: "electronics", condition: "九成新", likes: 55 },
+  { id: 10, name: "MUJI 懒人沙发 灰色", price: "¥200", location: "杭州余杭", img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[3/2]", seller: "极简生活", time: "6小时前", verified: false, category: "furniture", condition: "八成新", likes: 7 },
+  { id: 11, name: "Nike Air Max 270 黑色 42码", price: "¥220", location: "北京海淀", img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/3]", seller: "球鞋柜清理", time: "20分钟前", verified: false, category: "fashion", condition: "八成新", likes: 15 },
+  { id: 12, name: "大疆 Mini 3 Pro 无人机", price: "¥2,900", location: "深圳福田", img: "https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[3/4]", seller: "航拍爱好者", time: "4小时前", verified: true, category: "electronics", condition: "95新", likes: 38 },
+  { id: 13, name: "Longchamp 饺子包 中号 黑色", price: "¥320", location: "上海静安", img: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[1/1]", seller: "闲置包包", time: "8小时前", verified: true, category: "bags", condition: "九成新", likes: 22 },
+  { id: 14, name: "瑜伽垫 + 弹力带套装", price: "¥45", location: "广州番禺", img: "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/5]", seller: "健身小白", time: "2天前", verified: false, category: "sports", condition: "全新", likes: 3 },
+  { id: 15, name: "乐高城市系列 消防局 60320", price: "¥180", location: "成都武侯", img: "https://images.unsplash.com/photo-1587654780291-39c9404d7dd0?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[1/1]", seller: "乐高控老爸", time: "12小时前", verified: false, category: "toys", condition: "全新未拆", likes: 9 },
+  { id: 16, name: "Marshall 蓝牙音箱 黑色", price: "¥550", location: "北京通州", img: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/5]", seller: "音乐发烧友", time: "5小时前", verified: true, category: "electronics", condition: "95新", likes: 29 },
+  { id: 17, name: "宜家 KALLAX 书柜 白色 4x4格", price: "¥150", location: "上海闵行", img: "https://images.unsplash.com/photo-1594620302200-9a762244a156?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[3/4]", seller: "搬家出清", time: "1天前", verified: false, category: "furniture", condition: "七成新", likes: 4 },
+  { id: 18, name: "Canon EOS R50 微单 + 镜头", price: "¥4,200", location: "杭州滨江", img: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/3]", seller: "摄影师阿文", time: "1小时前", verified: true, category: "electronics", condition: "95新", likes: 48 },
+  { id: 19, name: "Zara 西装外套 男 M码 藏青", price: "¥95", location: "广州越秀", img: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[3/5]", seller: "职场换衣间", time: "3天前", verified: false, category: "fashion", condition: "九成新", likes: 6 },
+  { id: 20, name: "Switch 健身环大冒险", price: "¥120", location: "武汉江汉", img: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[1/1]", seller: "吃灰转让", time: "7小时前", verified: false, category: "toys", condition: "95新", likes: 14 },
+  { id: 21, name: "Herman Miller 人体工学椅", price: "¥2,200", location: "北京朝阳", img: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[4/5]", seller: "公司搬迁", time: "30分钟前", verified: true, category: "furniture", condition: "八成新", likes: 72 },
+  { id: 22, name: "AirPods Pro 2 带MagSafe壳", price: "¥780", location: "深圳宝安", img: "https://images.unsplash.com/photo-1606741965326-cb990ae01bb2?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[1/1]", seller: "果粉小陈", time: "10分钟前", verified: true, category: "electronics", condition: "95新", likes: 33 },
+  { id: 23, name: "猫爬架 多层实木 1.6米", price: "¥90", location: "南京建邺", img: "https://images.unsplash.com/photo-1545249390-6bdfa286032f?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[3/4]", seller: "猫奴搬家", time: "4小时前", verified: false, category: "furniture", condition: "七成新", likes: 11 },
+  { id: 24, name: "篮球 斯伯丁 室外用球", price: "¥35", location: "上海杨浦", img: "https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&q=80&w=500", aspect: "aspect-[1/1]", seller: "毕业甩卖", time: "2天前", verified: false, category: "sports", condition: "八成新", likes: 2 },
 ];
 
-const CATEGORIES: { key: Category; label: string; labelCn: string }[] = [
-  { key: "all", label: "All", labelCn: "全部" },
-  { key: "fashion", label: "Fashion", labelCn: "时尚" },
-  { key: "watches", label: "Watches", labelCn: "腕表" },
-  { key: "art", label: "Art", labelCn: "艺术" },
-  { key: "home", label: "Home", labelCn: "家居" },
-  { key: "bags", label: "Bags", labelCn: "箱包" },
+const CATEGORIES: { key: Category; label: string }[] = [
+  { key: "all", label: "全部" },
+  { key: "electronics", label: "数码" },
+  { key: "fashion", label: "服饰" },
+  { key: "furniture", label: "家具" },
+  { key: "bags", label: "箱包" },
+  { key: "books", label: "图书" },
+  { key: "sports", label: "运动" },
+  { key: "toys", label: "玩具" },
+  { key: "kitchen", label: "家电" },
+  { key: "art", label: "手工" },
 ];
-
-const CONDITIONS = ["all", "Pristine", "Excellent", "Loved"] as const;
-const COND_CN: Record<string, string> = { all: "全部", Pristine: "全新", Excellent: "优秀", Loved: "有使用痕迹" };
 
 export default function BrowsePage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<Category>("all");
-  const [sort, setSort] = useState<SortKey>("newest");
-  const [condition, setCondition] = useState<string>("all");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [showFilter, setShowFilter] = useState(true);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [favorites, setFavorites] = useState<Set<number>>(new Set());
 
   const toggleFav = (id: number) => {
     setFavorites((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
@@ -75,344 +80,161 @@ export default function BrowsePage() {
     let items = [...PRODUCTS];
     if (search) {
       const q = search.toLowerCase();
-      items = items.filter(
-        (p) => p.name.toLowerCase().includes(q) || p.nameCn.includes(q) || p.brand.toLowerCase().includes(q)
-      );
+      items = items.filter((p) => p.name.toLowerCase().includes(q) || p.location.includes(q) || p.seller.includes(q));
     }
     if (category !== "all") items = items.filter((p) => p.category === category);
-    if (condition !== "all") items = items.filter((p) => p.condition === condition);
     if (verifiedOnly) items = items.filter((p) => p.verified);
-
-    switch (sort) {
-      case "price-asc": items.sort((a, b) => a.price - b.price); break;
-      case "price-desc": items.sort((a, b) => b.price - a.price); break;
-      case "name": items.sort((a, b) => a.name.localeCompare(b.name)); break;
-      default: break;
-    }
     return items;
-  }, [search, category, sort, condition, verifiedOnly]);
+  }, [search, category, verifiedOnly]);
 
-  const stats = {
-    total: filtered.length,
-    avgPrice: filtered.length ? Math.round(filtered.reduce((s, p) => s + p.price, 0) / filtered.length) : 0,
-    verified: filtered.filter((p) => p.verified).length,
-    newest: filtered.filter((p) => p.isNew).length,
-  };
+  // Distribute items into 4 columns for masonry
+  const columns = useMemo(() => {
+    const cols: Product[][] = [[], [], [], []];
+    filtered.forEach((item, idx) => {
+      cols[idx % 4].push(item);
+    });
+    return cols;
+  }, [filtered]);
 
-  const hasActiveFilters = category !== "all" || condition !== "all" || verifiedOnly || search;
-
-  const resetFilters = () => {
-    setSearch("");
-    setCategory("all");
-    setCondition("all");
-    setVerifiedOnly(false);
-    setSort("newest");
-  };
+  const hasFilter = category !== "all" || verifiedOnly || search;
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
 
-      <main className="pt-16">
-        {/* Stats Bar */}
-        <div className="border-b border-border/50 bg-secondary/15">
-          <div className="mx-auto flex flex-wrap items-center gap-6 px-6 py-3 md:px-8">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              <Eye size={14} />
-              <span>在浏览</span>
+      <main className="pt-14">
+        {/* Top bar */}
+        <div className="sticky top-14 z-30 border-b border-border/40 bg-background/85 backdrop-blur-xl">
+          <div className="flex items-center gap-3 px-4 py-2.5 overflow-x-auto">
+            {/* Search */}
+            <div className="relative shrink-0 w-52">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="搜索宝贝..."
+                className="w-full rounded-lg border border-border/50 bg-secondary/20 py-1.5 pl-8 pr-7 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/40"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <X size={12} className="text-muted-foreground" />
+                </button>
+              )}
             </div>
-            {[
-              { label: "商品总数", value: stats.total.toString(), sub: `共 ${PRODUCTS.length} 件` },
-              { label: "均价", value: `$${stats.avgPrice.toLocaleString()}`, sub: `$${Math.min(...PRODUCTS.map(p=>p.price))} – $${Math.max(...PRODUCTS.map(p=>p.price)).toLocaleString()}` },
-              { label: "已认证", value: `${stats.verified} 件`, sub: `${PRODUCTS.length} 件中` },
-              { label: "新上架", value: `${stats.newest} 件`, sub: "最近24小时" },
-            ].map((stat) => (
-              <div key={stat.label} className="border-l border-border/40 pl-5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">{stat.label}</p>
-                <p className="text-lg font-headline font-bold text-primary leading-tight">{stat.value}</p>
-                <p className="text-[10px] text-muted-foreground">{stat.sub}</p>
+
+            <div className="h-5 w-px bg-border/40 shrink-0" />
+
+            {/* Category pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={() => setCategory(cat.key)}
+                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                    category === cat.key
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary/30 text-muted-foreground hover:bg-secondary/60"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="h-5 w-px bg-border/40 shrink-0" />
+
+            {/* Verified toggle */}
+            <button
+              onClick={() => setVerifiedOnly(!verifiedOnly)}
+              className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                verifiedOnly ? "bg-emerald-500/15 text-emerald-600" : "bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
+              }`}
+            >
+              <ShieldCheck size={12} />
+              认证
+            </button>
+
+            {/* Count */}
+            <span className="shrink-0 ml-auto text-[10px] text-muted-foreground/60">{filtered.length} 件</span>
+
+            {hasFilter && (
+              <button
+                onClick={() => { setSearch(""); setCategory("all"); setVerifiedOnly(false); }}
+                className="shrink-0 text-[10px] text-accent hover:underline"
+              >
+                清除
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Masonry Grid */}
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-32 text-center px-4">
+            <div className="mb-3 rounded-full bg-secondary/30 p-5">
+              <Search size={28} className="text-muted-foreground/30" />
+            </div>
+            <p className="text-base font-headline font-medium text-primary mb-1">没有找到相关宝贝</p>
+            <p className="text-xs text-muted-foreground">换个关键词试试？</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-3">
+            {/* 4 columns masonry */}
+            {columns.map((col, colIdx) => (
+              <div key={colIdx} className="flex flex-col gap-3">
+                {col.map((item) => (
+                  <div
+                    key={item.id}
+                    className="group relative rounded-xl overflow-hidden bg-background border border-border/30 transition-all hover:shadow-md hover:shadow-black/5"
+                  >
+                    {/* Image - variable height based on aspect */}
+                    <div className={`relative ${item.aspect} overflow-hidden bg-secondary/10`}>
+                      <img
+                        src={item.img}
+                        alt={item.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        loading="lazy"
+                      />
+                      {/* Badges */}
+                      {item.verified && (
+                        <span className="absolute top-2 left-2 inline-flex items-center gap-0.5 rounded-md bg-emerald-500/90 px-1.5 py-0.5 text-[9px] font-bold text-white">
+                          <ShieldCheck size={9} /> 已验
+                        </span>
+                      )}
+                      {/* Fav button */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFav(item.id); }}
+                        className="absolute top-2 right-2 rounded-full bg-black/30 backdrop-blur-sm p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Heart size={12} className={favorites.has(item.id) ? "fill-white text-white" : "text-white/80"} />
+                      </button>
+                      {/* Price overlay */}
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/50 to-transparent pt-6 pb-2 px-2.5">
+                        <span className="text-sm font-bold text-white">{item.price}</span>
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="p-2.5 space-y-1">
+                      <h3 className="text-xs font-medium text-primary leading-snug line-clamp-2">{item.name}</h3>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground/70">{item.condition}</span>
+                        <span className="text-[10px] text-muted-foreground/50 flex items-center gap-0.5">
+                          <Heart size={8} className="inline" /> {item.likes}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-0.5">
+                        <span className="text-[10px] text-muted-foreground/60 truncate max-w-[60%]">{item.seller}</span>
+                        <span className="text-[10px] text-muted-foreground/40">{item.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="flex">
-          {/* Filter Sidebar */}
-          {showFilter && (
-            <aside className="hidden w-72 shrink-0 border-r border-border/40 bg-background p-6 md:block sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-muted-foreground flex items-center gap-2">
-                  <SlidersHorizontal size={14} />
-                  筛选工作台
-                </h2>
-                {hasActiveFilters && (
-                  <button onClick={resetFilters} className="text-xs text-accent hover:underline">
-                    重置
-                  </button>
-                )}
-              </div>
-
-              {/* Search */}
-              <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="搜索商品 / Search..."
-                  className="w-full rounded-xl border border-border/60 bg-secondary/20 py-2.5 pl-10 pr-3 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50"
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <X size={14} className="text-muted-foreground hover:text-primary" />
-                  </button>
-                )}
-              </div>
-
-              {/* Category */}
-              <div className="mb-6">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">品类 Category</p>
-                <div className="flex flex-wrap gap-2">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.key}
-                      onClick={() => setCategory(cat.key)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                        category === cat.key
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "bg-secondary/30 text-muted-foreground hover:bg-secondary/60 hover:text-primary"
-                      }`}
-                    >
-                      {cat.labelCn}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Condition */}
-              <div className="mb-6">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">品相 Condition</p>
-                <div className="space-y-1.5">
-                  {CONDITIONS.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setCondition(c)}
-                      className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-all ${
-                        condition === c
-                          ? "bg-accent/10 text-accent font-medium border border-accent/20"
-                          : "text-muted-foreground hover:bg-secondary/30"
-                      }`}
-                    >
-                      {COND_CN[c]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Verified toggle */}
-              <div className="mb-6">
-                <button
-                  onClick={() => setVerifiedOnly(!verifiedOnly)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm transition-all ${
-                    verifiedOnly
-                      ? "bg-accent/10 text-accent border border-accent/20"
-                      : "bg-secondary/20 text-muted-foreground hover:bg-secondary/40"
-                  }`}
-                >
-                  <ShieldCheck size={16} />
-                  <span className="font-medium">仅显示已认证</span>
-                  <span className={`ml-auto h-5 w-9 rounded-full transition-colors ${verifiedOnly ? "bg-accent" : "bg-border"}`}>
-                    <span className={`block h-4 w-4 translate-y-0.5 rounded-full bg-white shadow transition-transform ${verifiedOnly ? "translate-x-[18px]" : "translate-x-[2px]"}`} />
-                  </span>
-                </button>
-              </div>
-
-              {/* Result count */}
-              <div className="rounded-xl bg-secondary/20 p-4 text-center">
-                <p className="text-3xl font-headline font-bold text-primary">{filtered.length}</p>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest">件商品符合条件</p>
-              </div>
-            </aside>
-          )}
-
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            {/* Toolbar */}
-            <div className="sticky top-16 z-30 flex items-center justify-between border-b border-border/40 bg-background/80 backdrop-blur-xl px-6 py-3">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setShowFilter(!showFilter)}
-                  className="hidden md:flex items-center gap-2 rounded-lg border border-border/50 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-secondary/30 transition-all"
-                >
-                  <SlidersHorizontal size={14} />
-                  {showFilter ? "隐藏筛选" : "显示筛选"}
-                </button>
-
-                {/* Mobile filter button */}
-                <button
-                  onClick={() => setShowFilter(!showFilter)}
-                  className="md:hidden flex items-center gap-2 rounded-lg border border-border/50 px-3 py-1.5 text-xs font-medium text-muted-foreground"
-                >
-                  <SlidersHorizontal size={14} />
-                  筛选
-                </button>
-
-                {hasActiveFilters && (
-                  <div className="flex items-center gap-2">
-                    {category !== "all" && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-[10px] font-medium text-accent">
-                        {CATEGORIES.find((c) => c.key === category)?.labelCn}
-                        <button onClick={() => setCategory("all")}><X size={10} /></button>
-                      </span>
-                    )}
-                    {verifiedOnly && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2.5 py-1 text-[10px] font-medium text-accent">
-                        已认证
-                        <button onClick={() => setVerifiedOnly(false)}><X size={10} /></button>
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1 rounded-lg border border-border/40 p-0.5">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`rounded-md p-1.5 transition-all ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"}`}
-                  >
-                    <Grid3X3 size={14} />
-                  </button>
-                  <button
-                    onClick={() => setViewMode("list")}
-                    className={`rounded-md p-1.5 transition-all ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"}`}
-                  >
-                    <LayoutList size={14} />
-                  </button>
-                </div>
-
-                <select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="rounded-lg border border-border/50 bg-transparent px-3 py-1.5 text-xs font-medium text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
-                >
-                  <option value="newest">最新上架</option>
-                  <option value="price-asc">价格 ↑</option>
-                  <option value="price-desc">价格 ↓</option>
-                  <option value="name">名称 A-Z</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Product Grid / List */}
-            <div className="p-6">
-              {filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                  <div className="mb-4 rounded-full bg-secondary/30 p-6">
-                    <Search size={32} className="text-muted-foreground/40" />
-                  </div>
-                  <h3 className="text-xl font-headline font-medium text-primary mb-2">未找到商品</h3>
-                  <p className="text-sm text-muted-foreground mb-4">试试调整筛选条件，或浏览全部商品</p>
-                  <Button variant="outline" size="sm" onClick={resetFilters} className="rounded-xl">
-                    重置筛选
-                  </Button>
-                </div>
-              ) : viewMode === "grid" ? (
-                <div className={`grid gap-5 ${showFilter ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}`}>
-                  {filtered.map((item) => (
-                    <div
-                      key={item.id}
-                      className="group relative rounded-2xl border border-border/40 bg-background overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1"
-                    >
-                      {/* Image */}
-                      <div className="relative aspect-[3/4] overflow-hidden bg-secondary/10">
-                        <img
-                          src={item.img}
-                          alt={item.nameCn}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                        {/* Overlays */}
-                        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-                          {item.isNew && (
-                            <span className="rounded-md bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                              NEW
-                            </span>
-                          )}
-                          {item.verified && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
-                              <ShieldCheck size={10} /> 认证
-                            </span>
-                          )}
-                        </div>
-                        <div className="absolute top-3 right-3 flex flex-col gap-1.5">
-                          <span className="rounded-lg bg-white/85 backdrop-blur-md px-2.5 py-1 text-xs font-bold text-primary shadow-sm">
-                            {item.priceDisplay}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => toggleFav(item.id)}
-                          className="absolute bottom-3 right-3 rounded-full bg-white/80 backdrop-blur-sm p-2 opacity-0 transition-all group-hover:opacity-100 hover:bg-white"
-                        >
-                          <Heart size={14} className={favorites.has(item.id) ? "fill-accent text-accent" : "text-muted-foreground"} />
-                        </button>
-                      </div>
-
-                      {/* Info */}
-                      <div className="p-4 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">{item.brand}</p>
-                          <p className="text-[10px] text-muted-foreground">{item.listedAgoCn}</p>
-                        </div>
-                        <h3 className="text-base font-headline font-medium text-primary leading-snug">{item.nameCn}</h3>
-                        <p className="text-xs text-muted-foreground">{item.name}</p>
-                        <div className="flex items-center justify-between pt-1">
-                          <span className="rounded-md bg-secondary/40 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                            {item.conditionCn}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">卖家: {item.seller}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                /* List View */
-                <div className="space-y-3">
-                  {filtered.map((item) => (
-                    <div
-                      key={item.id}
-                      className="group flex items-center gap-5 rounded-xl border border-border/40 bg-background p-3 transition-all hover:shadow-md hover:shadow-black/5"
-                    >
-                      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-secondary/10">
-                        <img src={item.img} alt={item.nameCn} className="h-full w-full object-cover" />
-                        {item.verified && (
-                          <span className="absolute top-1 left-1 rounded bg-emerald-500/90 p-0.5">
-                            <ShieldCheck size={10} className="text-white" />
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-accent">{item.brand}</p>
-                          {item.isNew && <span className="rounded bg-accent px-1.5 py-0.5 text-[9px] font-bold text-white">NEW</span>}
-                        </div>
-                        <h3 className="text-sm font-headline font-medium text-primary truncate">{item.nameCn}</h3>
-                        <p className="text-xs text-muted-foreground truncate">{item.name} · {item.conditionCn}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-lg font-headline font-bold text-primary">{item.priceDisplay}</p>
-                        <p className="text-[10px] text-muted-foreground">{item.listedAgoCn}</p>
-                      </div>
-                      <button onClick={() => toggleFav(item.id)} className="shrink-0 p-2 rounded-full hover:bg-secondary/30 transition-colors">
-                        <Heart size={16} className={favorites.has(item.id) ? "fill-accent text-accent" : "text-muted-foreground"} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );
